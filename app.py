@@ -34,7 +34,7 @@ def run():
             Temperature: {temperature} c
             Pressure: {pressure} hPA
             Light Intensity: {light_intensity}
-            Light RGB: r{r}, g{g}, b{b}
+            Light RGB: r: {r}, g: {g}, b: {b}
             """.format(
                 location=config.LOCATION_NAME,
                 temperature=temperature,
