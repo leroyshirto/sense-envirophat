@@ -6,6 +6,7 @@ import requests
 import json
 
 from envirophat import light, weather
+from colr import color
 import config
 
 
@@ -34,7 +35,6 @@ def run():
             Temperature: {temperature} c
             Pressure: {pressure} hPA
             Light Intensity: {light_intensity}
-            Light RGB: r: {r}, g: {g}, b: {b}
             """.format(
                 location=config.LOCATION_NAME,
                 temperature=temperature,
@@ -44,6 +44,12 @@ def run():
             )
 
             print(output)
+            print(
+                color("Light RGB: r: %s, g: %s, b: %s " % (r, g, b) + u"\u2588\u2588\u2588\u2588\u2588",
+                      fore=(r, g, b),
+                      back=(0, 0, 0)
+                      )
+            )
 
             if config.SUBMIT_TO_ENDPOINT:
                 headers = {"Authorization": "Bearer %s" % config.WEATHER_ENDPOINT_AUTH_TOKEN}
