@@ -1,55 +1,56 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import time
 from datetime import datetime
 import requests
-import os
 import json
 
 from envirophat import light, weather
-
-
-poll_frequency = float(os.environ.get('POLL_FREQUENCY', default=300))  # Sensor data reporting period (5 minutes)
-location_name = os.environ.get('LOCATION_NAME', default='office')  # Sensor location
-endpoint_url = os.environ.get('ENDPOINT_URL', default='http://127.0.0.1/')  # The Endpoint the data will be sent to
+import config
 
 
 def run():
     while True:
         try:
-            temperature = round(weather.temperature(),2)
-            pressure = round(weather.pressure(),2)
-            light = light.light()
+            temperature = round(weather.temperature() - config.TEMP_CALIBRATION, 2)
+            pressure = round(weather.pressure() - config.PRESSURE_CALIBRATION, 2)
+            light_intensity = light.light()
+            r, g, b = light.rgb()
 
             payload = {
-                'location': location_name,
-                'poll_frequency_in_seconds': poll_frequency,
+                'location': config.LOCATION_NAME,
+                'poll_frequency_in_seconds': config.POLL_FREQUENCY,
                 'temperature': temperature,
                 'temperature_units': 'c',
                 'pressure': pressure,
-                'light': light,
+                'pressure_units': 'hPA',
+                'light_intensity': light_intensity,
+                'light_colour': '%s %s %s' % (r, g, b),
                 'date_polled': datetime.now()
             }
 
-            print("Sense")
             output = """
             Location: {location}
-            Temp: {temperature}c
-            Pressure: {pressure}
-            Light: {light}
+            Temperature: {temperature} c
+            Pressure: {pressure} hPA
+            Light Intensity: {light_intensity}
+            Light RGB: r{r}, g{g}, b{b}
             """.format(
-                location=location_name,
+                location=config.LOCATION_NAME,
                 temperature=temperature,
                 pressure=pressure,
-                light=light
+                light_intensity=light_intensity,
+                r=r, g=g, b=b
             )
 
             print(output)
 
-            requests.post(endpoint_url, json=json.dumps(payload))
+            if config.SUBMIT_TO_ENDPOINT:
+                headers = {"Authorization": "Bearer %s" % config.WEATHER_ENDPOINT_AUTH_TOKEN}
+                requests.post(config.WEATHER_ENDPOINT_URL, json=json.dumps(payload), headers=headers)
         except Exception as e:
             print("Error getting sense data: %s" % e)
 
-        time.sleep(poll_frequency)
+        time.sleep(config.POLL_FREQUENCY)
 
 run()
